@@ -448,7 +448,7 @@ CK_RV C_CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate,
 	(void)pTemplate;
 	(void)ulCount;
 	(void)phObject;
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return CKR_TOKEN_WRITE_PROTECTED;
 }
 
 CK_RV C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
@@ -460,33 +460,57 @@ CK_RV C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 	(void)pTemplate;
 	(void)ulCount;
 	(void)phNewObject;
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return CKR_TOKEN_WRITE_PROTECTED;
 }
 
 CK_RV C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 {
 	(void)hSession;
 	(void)hObject;
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return CKR_TOKEN_WRITE_PROTECTED;
 }
 
 CK_RV C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 		      CK_ULONG_PTR pulSize)
 {
-	(void)hSession;
-	(void)hObject;
-	(void)pulSize;
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	struct pkcs11_session *sess;
+	struct pkcs11_object *obj;
+
+	if (pulSize == NULL)
+		return CKR_ARGUMENTS_BAD;
+	if (!api_initialized)
+		return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (!session_get_session(hSession, &sess))
+		return CKR_SESSION_HANDLE_INVALID;
+
+	if (!object_list_get(hObject, &obj))
+		return CKR_OBJECT_HANDLE_INVALID;
+
+	if (!object_get_size(obj, pulSize))
+		return CKR_FUNCTION_FAILED;
+
+	return CKR_OK;
 }
 
 CK_RV C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 			  CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
 {
-	(void)hSession;
-	(void)hObject;
-	(void)pTemplate;
-	(void)ulCount;
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	struct pkcs11_session *sess;
+	struct pkcs11_object *obj;
+
+	if (pTemplate == NULL && ulCount != 0)
+		return CKR_ARGUMENTS_BAD;
+	if (!api_initialized)
+		return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	if (!session_get_session(hSession, &sess))
+		return CKR_SESSION_HANDLE_INVALID;
+
+	if (!object_list_get(hObject, &obj))
+		return CKR_OBJECT_HANDLE_INVALID;
+
+	return object_get_attributes(obj, pTemplate, ulCount);
 }
 
 CK_RV C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
@@ -496,7 +520,7 @@ CK_RV C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 	(void)hObject;
 	(void)pTemplate;
 	(void)ulCount;
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return CKR_TOKEN_WRITE_PROTECTED;
 }
 
 CK_RV C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate,
